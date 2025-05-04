@@ -6,24 +6,33 @@ import base64
 import os
 
 def download_file_from_drive(file_id, destination):
-    # Google Drive download URL
     url = f"https://drive.google.com/uc?id={file_id}"
     response = requests.get(url)
     if response.status_code == 200:
         with open(destination, "wb") as f:
             f.write(response.content)
     else:
-        st.error("Failed to download the required file. Please check the file ID or internet connection.")
+        st.error("Failed to download the file. Please check the file ID or permissions.")
+
+def is_valid_pickle_file(file_path):
+    try:
+        with open(file_path, "rb") as f:
+            pickle.load(f)
+        return True
+    except Exception:
+        return False
 
 # Download the similarity.pkl file from Google Drive
 file_id = "16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS"  # Replace with your actual file ID
 similarity_file = "similarity.pkl"
 
-if not os.path.exists(similarity_file):  # Check if the file already exists
+if not os.path.exists(similarity_file):
     download_file_from_drive(file_id, similarity_file)
 
-# Load the similarity matrix
-similarity = pickle.load(open(similarity_file, "rb"))
+if not is_valid_pickle_file(similarity_file):
+    st.error("The downloaded file is not a valid pickle file. Please check the source.")
+else:
+    similarity = pickle.load(open(similarity_file, "rb"))
 
 
 def set_background(image_url):
