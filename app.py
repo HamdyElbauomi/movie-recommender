@@ -6,14 +6,12 @@ import base64
 
 
 
-def set_background(image_path):
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
+def set_background(image_url):
     st.markdown(
         f"""
         <style>
         .stApp {{
-            background-image: url("data:image/avif;base64,{encoded_string}");
+            background-image: url("{image_url}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -23,7 +21,7 @@ def set_background(image_path):
         unsafe_allow_html=True
     )
 
-# Use the local image
+# Use the  image URL
 set_background("https://4kwallpapers.com/images/walls/thumbs_3t/4845.jpg")
 
  
