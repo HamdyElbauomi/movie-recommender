@@ -8,7 +8,7 @@ import os
 def download_file_from_drive(file_id, destination):
     url = f"https://drive.google.com/uc?id={file_id}"
     response = requests.get(url)
-    if response.status_code == 200:
+    if response.status_code == 200 and "text/html" not in response.headers["Content-Type"]:
         with open(destination, "wb") as f:
             f.write(response.content)
     else:
@@ -23,16 +23,29 @@ def is_valid_pickle_file(file_path):
         return False
 
 # Download the similarity.pkl file from Google Drive
-file_id = "16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS"  # Replace with your actual file ID
+similarity_file_id = "16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS"  # Replace with your actual file ID
 similarity_file = "similarity.pkl"
 
 if not os.path.exists(similarity_file):
-    download_file_from_drive(file_id, similarity_file)
+    download_file_from_drive(similarity_file_id, similarity_file)
 
 if not is_valid_pickle_file(similarity_file):
-    st.error("The downloaded file is not a valid pickle file. Please check the source.")
+    st.error("The downloaded similarity.pkl file is not valid. Please check the source.")
 else:
     similarity = pickle.load(open(similarity_file, "rb"))
+
+# Download the movies.pkl file from Google Drive
+movies_file_id = "1hcyz4fG7mbCXKipjOepb3SsnyslEZT6n"  # Replace with your actual file ID
+movies_file = "movies.pkl"
+
+if not os.path.exists(movies_file):
+    download_file_from_drive(movies_file_id, movies_file)
+
+if not is_valid_pickle_file(movies_file):
+    st.error("The downloaded movies.pkl file is not valid. Please check the source.")
+else:
+    moveies_dict = pickle.load(open(movies_file, "rb"))
+    movies = pd.DataFrame(moveies_dict)
 
 
 def set_background(image_url):
@@ -79,8 +92,8 @@ def recommend(movie_name):
     return recommended_movies, recommended_movies_posters
 
 
-moveies_dict = pickle.load(open('movies.pkl', 'rb'))
-movies = pd.DataFrame(moveies_dict)
+# moveies_dict = pickle.load(open('movies.pkl', 'rb'))
+# movies = pd.DataFrame(moveies_dict)
 
 # similarity = pickle.load(open('https://drive.google.com/file/d/16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS/view?usp=sharing', 'rb'))
 
