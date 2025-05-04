@@ -79,7 +79,7 @@ def recommend(movie_name):
     return recommended_movies, recommended_movies_posters
 
 
-moveies_dict = pickle.load(open('movies.pkl', 'rb'))
+moveies_dict = pickle.load(open('https://github.com/HamdyElbauomi/movie-recommender/blob/main/movies.pkl', 'rb'))
 movies = pd.DataFrame(moveies_dict)
 
 # similarity = pickle.load(open('https://drive.google.com/file/d/16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS/view?usp=sharing', 'rb'))
