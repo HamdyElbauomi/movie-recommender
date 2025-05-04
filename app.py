@@ -24,7 +24,7 @@ def set_background(image_path):
     )
 
 # Use the local image
-set_background("images/zack-snyders-justice-league.jpg")
+set_background("https://github.com/HamdyElbauomi/movie-recommender/blob/main/zack-snyders-justice-league-2021-movies-superman-batman-3840x2160-4845.jpg")
 
  
 
