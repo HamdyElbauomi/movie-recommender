@@ -2,17 +2,12 @@ import streamlit as st
 import pickle
 import pandas as pd
 import requests
-import base64
 import os
+import gdown
 
 def download_file_from_drive(file_id, destination):
-    url = f"https://drive.google.com/uc?id={file_id}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(destination, "wb") as f:
-            f.write(response.content)
-    else:
-        st.error("Failed to download the file. Please check the file ID or permissions.")
+    url = f'https://drive.google.com/uc?id={file_id}'
+    gdown.download(url, output=destination, quiet=False)
 
 def is_valid_pickle_file(file_path):
     try:
@@ -22,25 +17,27 @@ def is_valid_pickle_file(file_path):
     except Exception:
         return False
 
-# Download the similarity.pkl file from Google Drive
-file_id = "16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS"  # Replace with your actual file ID
+# Download the similarity.pkl file from Google Drive using gdown
+def ensure_similarity_file(file_id, local_path):
+    if not os.path.exists(local_path) or not is_valid_pickle_file(local_path):
+        download_file_from_drive(file_id, local_path)
+        if not is_valid_pickle_file(local_path):
+            st.error("The downloaded file is not a valid pickle. Please check the file ID or permissions.")
+            st.stop()
+
+file_id = "16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS"
 similarity_file = "similarity.pkl"
+ensure_similarity_file(file_id, similarity_file)
+similarity = pickle.load(open(similarity_file, "rb"))
 
-if not os.path.exists(similarity_file):
-    download_file_from_drive(file_id, similarity_file)
-
-if not is_valid_pickle_file(similarity_file):
-    st.error("The downloaded file is not a valid pickle file. Please check the source.")
-else:
-    similarity = pickle.load(open(similarity_file, "rb"))
-
+# Set app background
 
 def set_background(image_url):
     st.markdown(
         f"""
         <style>
         .stApp {{
-            background-image: url("{image_url}");
+            background-image: url(\"{image_url}\");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -50,62 +47,40 @@ def set_background(image_url):
         unsafe_allow_html=True
     )
 
-# Use the  image URL
 set_background("https://4kwallpapers.com/images/walls/thumbs_3t/4845.jpg")
 
- 
-
-
+# Fetch poster helper
 def fetch_poster(movie_id):
-    response = requests.get(f'https://api.themoviedb.org/3/movie/{movie_id}?api_key=69f5cea05ad0d7ad5c34a00fa93b3462&language=en-US')
-    response_json = response.json()
-    return "https://image.tmdb.org/t/p/w500/" + response_json['poster_path']
+    response = requests.get(
+        f'https://api.themoviedb.org/3/movie/{movie_id}?api_key=69f5cea05ad0d7ad5c34a00fa93b3462&language=en-US'
+    )
+    data = response.json()
+    return f"https://image.tmdb.org/t/p/w500/{data.get('poster_path', '')}"
 
+# Recommendation logic
 def recommend(movie_name):
-    movie_index = movies[movies['title'] == movie_name].index[0]
-    distances = similarity[movie_index]
-    movie_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
+    idx = movies[movies['title'] == movie_name].index[0]
+    distances = similarity[idx]
+    pairs = sorted(list(enumerate(distances)), key=lambda x: x[1], reverse=True)[1:6]
 
-    recommended_movies = []
-    recommended_movies_posters = []
+    names, posters = [], []
+    for i, _ in pairs:
+        movie_id = movies.iloc[i]['movie_id']
+        names.append(movies.iloc[i]['title'])
+        posters.append(fetch_poster(movie_id))
+    return names, posters
 
-    for i in movie_list:
-        index = i[0]
-        movie_id = index
-        # fetch poster from API
-        recommended_movies.append(movies.iloc[index]['title'])
-        recommended_movies_posters.append(fetch_poster(movies.iloc[index]['movie_id']))
+# Load movies list
+movies_dict = pickle.load(open('movies.pkl', 'rb'))
+movies = pd.DataFrame(movies_dict)
 
-    return recommended_movies, recommended_movies_posters
-
-
-moveies_dict = pickle.load(open('movies.pkl', 'rb'))
-movies = pd.DataFrame(moveies_dict)
-
-# similarity = pickle.load(open('https://drive.google.com/file/d/16qftb-hYK9qdnc2ZOPSP8awthhb_vyNS/view?usp=sharing', 'rb'))
-
+# Streamlit UI
 st.title('Movie Recommender System')
-selected_movie_name = st.selectbox(
-    'Type or select a movie from the dropdown',
-    movies['title'].values)
-
+selected = st.selectbox('Type or select a movie:', movies['title'].values)
 if st.button('Show Recommendation'):
-    names, posters =  recommend(selected_movie_name)
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.text(names[0])
-        st.image(posters[0])
-    with col2:
-        st.text(names[1])
-        st.image(posters[1])
-
-    with col3:
-        st.text(names[2])
-        st.image(posters[2])
-    with col4:
-        st.text(names[3])
-        st.image(posters[3])
-    with col5:
-        st.text(names[4])
-        st.image(posters[4])
-    
+    names, posters = recommend(selected)
+    cols = st.columns(5)
+    for col, name, poster in zip(cols, names, posters):
+        with col:
+            st.text(name)
+            st.image(poster)  
