@@ -24,7 +24,7 @@ def set_background(image_path):
     )
 
 # Use the local image
-set_background("D:\Desktop\R_move_project\zack-snyders-justice-league-2021-movies-superman-batman-3840x2160-4845.jpg")
+set_background("https://4kwallpapers.com/images/walls/thumbs_3t/4845.jpg")
 
  
 
